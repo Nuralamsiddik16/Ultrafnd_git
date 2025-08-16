@@ -1,0 +1,12 @@
+# Visual feature extractor config
+optical_flow3dcnn:
+  dim: 256
+  n_pyramid_levels: 3
+  use_tvl1: true
+
+deep_forgery_detector:
+  dim: 256
+  ela_quality: 85
+  ela_scale: 1.0
+  lbp_radius: 1
+  lbp_points: 8

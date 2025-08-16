@@ -1,0 +1,4 @@
+# Emotion module
+text_model: j-hartmann/emotion-english-distilroberta-base
+use_audio: true
+sr: 16000

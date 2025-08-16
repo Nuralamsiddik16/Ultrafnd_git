@@ -1,0 +1,17 @@
+# DeepTruthClassifier (NODE-lite + calibration)
+input_dim: 512          # must match CrossModalTransformer fuse_mlp output (hidden_dim above)
+hidden_dim: 512
+dropout: 0.1
+num_classes: 2
+
+# Auxiliary forensic scalars concatenated at the classifier (delay, emotion)
+use_aux: true
+aux_dim: 2
+
+# NODE ensemble params
+node_trees: 6
+node_depth: 4
+node_tau: 10.0
+
+# Temperature scaling for calibrated outputs
+temperature: 1.0

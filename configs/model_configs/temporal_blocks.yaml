@@ -1,0 +1,8 @@
+# Temporal alignment config
+in_dim: 768          # expected input vector dim before alignment MLP (text/visual)
+out_dim: 256
+use_tcn: false       # set true only if you pass sequences to TemporalSyncNet.forward()
+tcn_hid: 128
+tcn_layers: 2
+tcn_kernel: 3
+dropout: 0.1

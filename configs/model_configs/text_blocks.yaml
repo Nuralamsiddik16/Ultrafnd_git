@@ -1,0 +1,6 @@
+# Text encoder config
+model_name: bert-base-uncased         # or "xlm-roberta-base" if you switch to MultilingualEmbedding
+dim: 768
+hidden_dim: 768                       # used by knowledge_proj in text_blocks.py
+proj_dim: 768                         # keep same unless you want an extra projection
+max_length: 256

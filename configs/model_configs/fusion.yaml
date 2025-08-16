@@ -1,0 +1,7 @@
+# Cross-modal fusion (ForensicCoAttention + pairwise ops + optional GNN)
+hidden_dim: 512
+dropout: 0.1
+
+# GNN usage (matches trainer)
+use_gnn: true
+gnn_dim: 128

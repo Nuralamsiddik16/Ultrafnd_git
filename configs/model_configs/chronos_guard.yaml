@@ -1,0 +1,3 @@
+# Temporal tamper detector
+feat_dim: 128
+use_opencv: true
