@@ -13,45 +13,11 @@ from torch.optim.lr_scheduler import StepLR
 from src.data_pipeline.fakesv_dataset import FakeSVRawDataset, build_gnn_cache_from_raw_dataset
 from src.models.fusion.cross_modal_transformer import CrossModalTransformer
 from src.models.fusion.deep_truth_classifier import DeepTruthClassifier
+from src.models.gnn import GNNModel
 from src.training.metrics.forensic_metrics import (
     aggregate_epoch_metrics,
     pretty_print,
 )
-
-# -----------------------------
-# Small, dependency-free GCN
-# -----------------------------
-
-class SimpleGCN(nn.Module):
-    """
-    Two-layer GCN over post nodes. No PyG dependency.
-    Input: X (N, F), adjacency A (N, N) sparse/dense 0/1.
-    """
-    def __init__(self, in_dim: int, hid: int = 128, out_dim: int = 128, dropout: float = 0.3):
-        super().__init__()
-        self.lin1 = nn.Linear(in_dim, hid)
-        self.lin2 = nn.Linear(hid, out_dim)
-        self.drop = nn.Dropout(dropout)
-
-    def forward(self, x: torch.Tensor, adj: torch.Tensor) -> torch.Tensor:
-        """
-        x:   (N, F)
-        adj: (N, N) binary/float, will be sym-norm’d inside
-        """
-        # A_hat = A + I
-        N = adj.shape[0]
-        device = x.device
-        A_hat = adj + torch.eye(N, device=device, dtype=x.dtype)
-
-        # D^{-1/2} A_hat D^{-1/2}
-        deg = A_hat.sum(dim=-1) + 1e-9
-        D_inv_sqrt = torch.diag(torch.pow(deg, -0.5))
-        A_norm = D_inv_sqrt @ A_hat @ D_inv_sqrt
-
-        h = self.drop(F.gelu(self.lin1(A_norm @ x)))
-        z = self.lin2(A_norm @ h)
-        return z  # (N, out_dim)
-
 
 # -----------------------------
 # Dataset from cache (tensorized)
@@ -98,6 +64,8 @@ class TrainConfig:
     weight_decay: float = 1e-4
     gnn_dim: int = 128
     gnn_overlap_thresh: float = 0.12
+    gnn_layers: int = 3
+    gnn_dropout: float = 0.2
     seed: int = 42
     use_mps: bool = True
     use_gnn: bool = True
@@ -199,8 +167,14 @@ class ForensicTrainer:
         self.X = torch.from_numpy(X).to(self.device, dtype=self.dtype)     # (N, 416)
         self.Adj = torch.from_numpy(Adj).to(self.device, dtype=self.dtype) # (N, N)
 
-        # Initialize GCN
-        self.gnn = SimpleGCN(in_dim=self.X.shape[1], hid=2*self.cfg.gnn_dim, out_dim=self.cfg.gnn_dim, dropout=0.2).to(self.device)
+        # Initialize GraphSAGE-based GNN
+        self.gnn = GNNModel(
+            in_dim=self.X.shape[1],
+            hid=2 * self.cfg.gnn_dim,
+            out_dim=self.cfg.gnn_dim,
+            dropout=self.cfg.gnn_dropout,
+            num_layers=self.cfg.gnn_layers,
+        ).to(self.device)
 
         # Optional quick pre-train for stability (degree reconstruction)
         self._pretrain_gnn(epochs=2)

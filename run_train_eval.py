@@ -40,6 +40,10 @@ def parse_args():
     p.add_argument("--gnn_dim", type=int, default=128)
     p.add_argument("--gnn_overlap_thresh", type=float, default=0.12,
                    help="OCR Jaccard threshold for graph edges")
+    p.add_argument("--gnn_layers", type=int, default=3,
+                   help="Number of GraphSAGE layers")
+    p.add_argument("--gnn_dropout", type=float, default=0.2,
+                   help="Dropout rate in the GNN")
     p.add_argument("--seed", type=int, default=42)
     p.add_argument("--cpu", action="store_true", help="Force CPU even if MPS is available")
     p.add_argument("--no_gnn", action="store_true", help="Disable GNN features")
@@ -72,6 +76,8 @@ def main():
     print(f"Batch size:      {args.batch_size}")
     print(f"Use GNN:         {not args.no_gnn}")
     print(f"GNN overlap thr: {args.gnn_overlap_thresh}")
+    print(f"GNN layers:      {args.gnn_layers}")
+    print(f"GNN dropout:     {args.gnn_dropout}")
     print("==========================")
 
     cfg = TrainConfig(
@@ -84,6 +90,8 @@ def main():
         weight_decay=args.weight_decay,
         gnn_dim=args.gnn_dim,
         gnn_overlap_thresh=args.gnn_overlap_thresh,
+        gnn_layers=args.gnn_layers,
+        gnn_dropout=args.gnn_dropout,
         seed=args.seed,
         use_mps=(device.type == "mps"),
         use_gnn=(not args.no_gnn),
