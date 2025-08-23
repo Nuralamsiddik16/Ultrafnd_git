@@ -98,6 +98,7 @@ class TrainConfig:
     weight_decay: float = 1e-4
     gnn_dim: int = 128
     gnn_overlap_thresh: float = 0.12
+    focal_gamma: float = 0.0
     seed: int = 42
     use_mps: bool = True
     use_gnn: bool = True
@@ -284,7 +285,12 @@ class ForensicTrainer:
 
         for batch in loader:
             out = self._forward_batch(batch, split)
-            loss = F.cross_entropy(out["logits"], out["y"])
+            if self.cfg.focal_gamma > 0:
+                ce = F.cross_entropy(out["logits"], out["y"], reduction="none")
+                pt = torch.exp(-ce)
+                loss = ((1 - pt) ** self.cfg.focal_gamma * ce).mean()
+            else:
+                loss = F.cross_entropy(out["logits"], out["y"])
 
             if is_train:
                 self.optim.zero_grad(set_to_none=True)
